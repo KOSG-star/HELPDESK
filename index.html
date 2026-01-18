@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+
+  <style>
+    body {
+      font-family: Arial;
+      background: linear-gradient(135deg, #06283d, #0b3c49, #0f4c5c);
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin: 0;
+    }
+
+   /* LOGO KIRI ATAS */
+.logo-kiri {
+  position: fixed;      /* kunci ke layar */
+  top: 16px;            /* jarak dari atas */
+  left: 16px;           /* jarak dari kiri */
+  width: 160px;
+  height: auto;
+
+  z-index: 9999;        /* pastikan di atas semua elemen */
+  pointer-events: none;/* opsional: klik tembus */
+
+  border-radius: 8px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+}
+ /* LOGO KANAN ATAS */
+.logo-kanan {
+  position: fixed;      /* kunci ke layar */
+  top: 13px;            /* jarak dari atas */
+  right: 20px;           /* jarak dari kanan */
+  width: 80px;
+  height: auto;
+
+  z-index: 9999;        /* pastikan di atas semua elemen */
+  pointer-events: none;/* opsional: klik tembus */
+
+  border-radius: 8px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+}
+
+    .box {
+      width: 360px;
+      background: #fff;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 5px 15px rgba(0,0,0,.3);
+      display: none;
+    }
+
+    h3 {
+      text-align: center;
+      margin-bottom: 15px;
+    }
+
+    input, textarea {
+      width: 100%;
+      padding: 10px;
+      margin-top: 10px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      box-sizing: border-box;
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      background: #006994;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-weight: bold;
+      margin-top: 15px;
+      cursor: pointer;
+    }
+
+    .logout {
+      background: #b22222;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+
+<body>
+
+<!-- LOGO KIRI ATAS -->
+<img
+  src="https://drive.google.com/thumbnail?id=15Y6UGghC8gBCd5T7p6QGhOXRDt9ZolhL"
+  class="logo-kiri" alt="logo-kiri"
+>
+<!-- LOGO KANAN ATAS -->
+<img
+  src="https://drive.google.com/thumbnail?id=1hmkZjZncjZ8PHT6FgRIM_5f6Lcr_oZgL"
+  class="logo-kanan" alt="logo-kanan"
+>
+<!-- ================= LOGIN ================= -->
+<div class="box" id="loginBox">
+  <h3>DASHBOARD LOGIN</h3>
+  <input id="username" placeholder="Username">
+  <input id="password" type="password" placeholder="Password">
+  <button onclick="login()">LOGIN</button>
+  <div id="msg" style="color:red;margin-top:10px"></div>
+</div>
+
+<!-- ================= GUEST ================= -->
+<div class="box" id="dashboardGuest">
+  <h3>DASHBOARD KOSG</h3>
+  <input id="nama" placeholder="Nama Pelapor">
+  <input id="tim" placeholder="Tim / Bagian">
+  <textarea id="keluhan" rows="5" placeholder="Tuliskan keluhan"></textarea>
+  <button onclick="kirim()">SEND</button>
+  <div id="hasil" style="margin-top:10px;color:green"></div>
+  <button class="logout" onclick="logout()">LOGOUT</button>
+</div>
+
+<!-- ================= ADMIN ================= -->
+<div class="box" id="dashboardAdmin">
+  <h3>Dashboard Admin</h3>
+  <p style="cursor:pointer;color:#006994" onclick="loadPelaporan()">
+    📋 Lihat Data Pelaporan
+  </p>
+  <div id="dataPelaporan" style="margin-top:15px;max-height:400px;overflow:auto;"></div>
+  <button class="logout" onclick="logout()">LOGOUT</button>
+</div>
+
+<!-- ================= SUPER ADMIN ================= -->
+<div class="box" id="dashboardSuperAdmin">
+  <h3>Dashboard Super Admin</h3>
+  <p>👑 Kontrol penuh sistem</p>
+  <button class="logout" onclick="logout()">LOGOUT</button>
+</div>
+
+<script>
+google.script.run.withSuccessHandler(res=>{
+  if(res.login){
+    showDashboard(res.role);
+  } else {
+    loginBox.style.display="block";
+  }
+}).getSession();
+
+function login(){
+  google.script.run.withSuccessHandler(res=>{
+    if(res.status==="success"){
+      showDashboard(res.role);
+    } else {
+      msg.innerText="Login gagal";
+    }
+  }).loginUser(username.value, password.value);
+}
+
+function showDashboard(role){
+  hideAll();
+  role = String(role).trim().toUpperCase();
+  if(role==="GUEST") dashboardGuest.style.display="block";
+  else if(role==="ADMIN") dashboardAdmin.style.display="block";
+  else if(role==="SUPERADMIN") dashboardSuperAdmin.style.display="block";
+}
+
+function hideAll(){
+  loginBox.style.display="none";
+  dashboardGuest.style.display="none";
+  dashboardAdmin.style.display="none";
+  dashboardSuperAdmin.style.display="none";
+}
+
+function kirim(){
+  if(!nama.value || !tim.value || !keluhan.value){
+    alert("Semua harus diisi");
+    return;
+  }
+
+  google.script.run.withSuccessHandler(res=>{
+    const waktu = new Date().toLocaleString("id-ID");
+    hasil.innerHTML = `
+      ✅ Tiket dibuat<br>
+      No: <b>${res.tiket}</b><br>
+      <b>Nama:</b> ${nama.value}<br>
+      <b>Status:</b>"PLANING"<br>
+      <b>Waktu:</b> ${waktu}
+    `;
+    nama.value="";
+    tim.value="";
+    keluhan.value="";
+  }).simpanPelaporan(nama.value, tim.value, keluhan.value);
+}
+
+function logout(){
+  google.script.run.withSuccessHandler(()=>{
+    hideAll();
+    loginBox.style.display="block";
+  }).logout();
+}
+</script>
+
+</body>
+</html>
